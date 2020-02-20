@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Bank Details | IFSC CODE</title>
+    <link
+     rel="stylesheet"
+     href="http://code.jquery.com/ui/1.9.0/themes/smoothness/jquery-ui.css" />
+     <link rel="stylesheet" href="https://cdn.rawgit.com/raphaelfabeni/css-loader/7090f306bff5627b5b94c3607306838db7df7396/dist/css-loader.css">
+    <style type="text/css">
+        .ui-helper-hidden-accessible { position: absolute; left: -9999px; }
+    </style>
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+   <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+         //var url = 'https://drive.google.com/host/1jRqXYiq-ltPY6sg-02vLdidyyTz8acUJ/';
+         var url = 'http://github.com/joshua-rajamani/fernweh-packages/blob/master/bank/bank.json?callback=?';
+         //var url = 'bank.json';
+         var $loading = $('.loader').hide();
+         $.getJSON( url, function( data ) {
+                var banks = [];
+                var bank_id = [];
+                $loading.show();
+                
+                $.each( data, function( key, val ) {
+                    banks.push(val.bank_name);
+                    bank_id[val.bank_name] = val.ID;
+                });
+                $loading.hide();
+                $("#bank_name").autocomplete({
+                   
+                    source:banks,  
+                    focus: showLabel,
+                    select: showLabel,
+                    change: showLabel                 
+                });
+
+                function showLabel(event, ui) {
+                   
+                    var bankID = bank_id[ui.item.label];
+                    $.getJSON( "data"+bankID+".json", function( data ) {
+                        $loading.show();  
+                        var branches = [];
+                        var branch_data = [];
+                        $.each( data, function( key, val ) {
+                            if (val.hasOwnProperty('BRANCH')) {
+                                branches.push(val.BRANCH);
+                                branch_data[val.BRANCH] = val;
+                            } else {
+                                branches.push(val.OFFICE);
+                                branch_data[val.OFFICE] = val;
+                            }
+                           
+                        })
+                        $loading.hide();
+                        $("#bank_branch").autocomplete({
+                            source:branches,  
+                            focus: showData,
+                            select: showData,
+                            change: showData               
+                        });
+                            
+                        function showData(event, ui) {
+                            $('#bank_ifsc').val(branch_data[ui.item.label].IFSC);
+                            $('#bank_address').val(branch_data[ui.item.label].ADDRESS)
+                        }
+
+                     }).error(function(jqXhr, textStatus, error) {
+                            console.log("ERROR: " + textStatus + ", " + error);
+                     });
+                    
+                 }
+            });
+        });
+
+       
+    </script>
+</head>
+<body>
+    <div class="loader loader-default is-active"></div>
+    <p>Bank Name</p>
+    <input id="bank_name"/>
+    <p>Branch</p>
+    <input id="bank_branch" />
+    <p>IFSC CODE</p>
+    <input id="bank_ifsc" readonly/>
+    <p>Address</p>
+    <textarea id="bank_address" cols="52" rows="5" readonly></textarea>
+</body>
+</html>
